@@ -1,0 +1,41 @@
+#!/bin/sh -efu
+# Detect file size such that switching from zstd to pzstd pays off
+# in terms of time.  In other words, files which are too small should
+# be compressed with zstd rather than zstd.
+# Usage: switch-to-pzstd /path/to/file
+
+Time()
+{
+	/usr/bin/time -f %e 2>&1 sh -efu /dev/stdin "$@" <<-'EOF'
+		niter=$1; shift
+		for i in $(seq 1 $niter); do
+			"$@" <data
+		done >/dev/null
+	EOF
+}
+
+Profile()
+{
+	zst_opt=-$1; shift
+	sizeM=$(du -bm "$1")
+	sizeM=$(set -- $sizeM && echo $1)
+	niter=9
+	for M in $(seq 1 $sizeM); do
+		dd if="$1" bs=1M count=$M 2>/dev/null >data
+		t1=$(Time $niter  zstd $zst_opt)
+		t2=$(Time $niter pzstd $zst_opt)
+		if perl -e "exit($t1/$t2 > ($t1 > 1 ? 1.1 : 1.2) ? 0 : 1)"; then
+			break
+		fi
+	done
+	printf '%s %d\n' $zst_opt $M
+}
+
+if [ $# != 1 ]; then
+	echo >&2 "need one input"
+	exit 1
+fi
+
+for level in $(seq 1 19); do
+	Profile $level "$1"
+done
