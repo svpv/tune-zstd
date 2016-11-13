@@ -1,0 +1,7 @@
+#!/bin/awk -f
+{ s=$2; t=$3}
+s0==0 { s0=s; t0=t; print $0; next }
+{ ds=s0-s; dt = t-t0
+  s0=s; t0=t
+  printf "%-33s\tds:%6d\tdt:% -.2f\n", $0, ds, dt
+}

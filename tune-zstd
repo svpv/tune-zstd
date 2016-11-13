@@ -1,0 +1,8 @@
+#!/bin/bash -efu
+
+for level in $(seq 1 19); do
+	/usr/bin/time --format=${FMT:-%U} 2>time \
+	sh -efu -c 'opt=$1; shift; for f; do ${ZSTD:-zstd} $opt <"$f"; done' -- -$level "$@" |
+	wc -c >size
+	printf '%3d\t%d\t%f\n' -$level $(cat size) $(cat time)
+done
