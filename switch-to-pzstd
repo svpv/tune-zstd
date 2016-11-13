@@ -24,7 +24,7 @@ Profile()
 		dd if="$1" bs=1M count=$M 2>/dev/null >data
 		t1=$(Time $niter  zstd $zst_opt)
 		t2=$(Time $niter pzstd $zst_opt)
-		if perl -e "exit($t1/$t2 > ($t1 > 1 ? 1.1 : 1.2) ? 0 : 1)"; then
+		if perl -e "exit($t1 > 0.1 && $t1/$t2 > ($t1 > 1 ? 1.1 : 1.2) ? 0 : 1)"; then
 			break
 		fi
 	done
